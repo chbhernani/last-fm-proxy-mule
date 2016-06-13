@@ -9,21 +9,38 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
     <http:listener-config name="HTTP_Listener_Configuration" host="localhost" port="8081" doc:name="HTTP Listener Configuration"/>
+    <http:request-config name="HTTP_Request_Configuration_API_Last_FM" host="ws.audioscrobbler.com" doc:name="HTTP Request Configuration" basePath="2.0/" port="80"/>
     <flow name="proxy-last_fmFlow">
         <http:listener config-ref="HTTP_Listener_Configuration" path="/details" allowedMethods="GET" doc:name="Receive HTTP request"/>
-        <expression-component doc:name="Setting query variables"><![CDATA[flowVars.artist = message.inboundProperties['http.query.params'].artist;
-flowVars.track = message.inboundProperties['http.query.params'].track;]]></expression-component>
+        <set-variable variableName="artist" value="#[message.inboundProperties['http.query.params'].artist]" doc:name="Set 'artist' variable"/>
+        <set-variable variableName="track" value="#[message.inboundProperties['http.query.params'].track]" doc:name="Set 'track' variable"/>
         <choice doc:name="Choice">
-            <when expression="#[flowVars.artist != null || flowVars.track != null]">
-                <flow-ref name="proxy-last_fmSub_Flow" doc:name="Sub Flow"/>
+            <when expression="#[flowVars.artist != empty &amp;&amp; flowVars.track != empty]">
+                <http:request config-ref="HTTP_Request_Configuration_API_Last_FM" path="/" method="POST" doc:name="Track Request to API Last.FM">
+                    <http:request-builder>
+                        <http:query-param paramName="method" value="track.getInfo"/>
+                        <http:query-param paramName="api_key" value="${api.api_key}"/>
+                        <http:query-param paramName="format" value="json"/>
+                        <http:query-param paramName="artist" value="#[flowVars.artist]"/>
+                        <http:query-param paramName="track" value="#[flowVars.track]"/>
+                    </http:request-builder>
+                </http:request>
+            </when>
+            <when expression="#[flowVars.artist != empty &amp;&amp; flowVars.track == empty]">
+                <http:request config-ref="HTTP_Request_Configuration_API_Last_FM" path="/" method="POST" doc:name="Artist Request to API Last.FM">
+                    <http:request-builder>
+                        <http:query-param paramName="method" value="artist.getInfo"/>
+                        <http:query-param paramName="api_key" value="${api.api_key}"/>
+                        <http:query-param paramName="format" value="json"/>
+                        <http:query-param paramName="artist" value="#[flowVars.artist]"/>
+                    </http:request-builder>
+                </http:request>
             </when>
             <otherwise>
                 <set-payload value="${invalid.request}" mimeType="text/json" doc:name="Set Payload with invalid request message"/>
             </otherwise>
         </choice>
-        <logger message="artist=#[flowVars.artist], track=#[flowVars.track], payload=#[payload]" level="INFO" doc:name="Log the reply"/>
+        <set-payload value="#[message.payload]" mimeType="text/json" doc:name="Set Payload"/>
+        <logger message="artist=#[flowVars.artist], track=#[flowVars.track], payload=#[message.payload]" level="INFO" doc:name="Log the reply"/>
     </flow>
-    <sub-flow name="proxy-last_fmSub_Flow">
-        <set-payload value="#[message.inboundProperties['http.query.string']]" doc:name="Set Payload"/>
-    </sub-flow>
 </mule>
