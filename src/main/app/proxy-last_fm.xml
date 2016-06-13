@@ -8,13 +8,13 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
-    <http:listener-config name="HTTP_Listener_Configuration" host="localhost" port="8081" doc:name="HTTP Listener Configuration"/>
+    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="${http.port}" doc:name="HTTP Listener Configuration"/>
     <http:request-config name="HTTP_Request_Configuration_API_Last_FM" host="ws.audioscrobbler.com" doc:name="HTTP Request Configuration" basePath="2.0/" port="80"/>
     <flow name="proxy-last_fmFlow">
         <http:listener config-ref="HTTP_Listener_Configuration" path="/details" allowedMethods="GET" doc:name="Receive HTTP request"/>
         <set-variable variableName="artist" value="#[message.inboundProperties['http.query.params'].artist]" doc:name="Set 'artist' variable"/>
         <set-variable variableName="track" value="#[message.inboundProperties['http.query.params'].track]" doc:name="Set 'track' variable"/>
-        <choice doc:name="Choice">
+        <choice doc:name="Is a valid query?">
             <when expression="#[flowVars.artist != empty &amp;&amp; flowVars.track != empty]">
                 <http:request config-ref="HTTP_Request_Configuration_API_Last_FM" path="/" method="POST" doc:name="Track Request to API Last.FM">
                     <http:request-builder>
@@ -41,6 +41,6 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
             </otherwise>
         </choice>
         <set-payload value="#[message.payload]" mimeType="text/json" doc:name="Set Payload"/>
-        <logger message="artist=#[flowVars.artist], track=#[flowVars.track], payload=#[message.payload]" level="INFO" doc:name="Log the reply"/>
+        <logger message="artist=#[flowVars.artist], track=#[flowVars.track], payload=#[message.payloadAs(java.lang.String)]" level="INFO" doc:name="Log the reply"/>
     </flow>
 </mule>
