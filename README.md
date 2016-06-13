@@ -1,6 +1,6 @@
 # Proxying Last.FM API with MuleSoft Anypoint Platform™ #
 
- Built with (MuleSoft Anypoint Platform™](https://www.mulesoft.com/) and utilizing [Last.FM API](http://www.last.fm/api/), this proxy brings the artist details or track details in JSON format, depending of what parameter is sent. When only "artist" parameter is sent, an JSON with artist details is returned. When both parameters "artist" and "track" are sent, a JSON with track details is returned.
+ Built with [MuleSoft Anypoint Platform™](https://www.mulesoft.com/) and utilizing [Last.FM API](http://www.last.fm/api/), this proxy brings the artist details or track details in JSON format, depending of what parameter is sent. When only "artist" parameter is sent, an JSON with artist details is returned. When both parameters "artist" and "track" are sent, a JSON with track details is returned.
 
 Two parameters are received:
 - artist (required): The artist name
